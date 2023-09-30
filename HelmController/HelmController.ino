@@ -1,5 +1,6 @@
 #include <FastLED.h>
 #include <Servo.h>
+#include "pitches.h"
 
 // How many leds in your strip?
 #define NUM_LEDS 1
@@ -11,6 +12,11 @@
 
 #define COIL_TIME 20
 
+int buzzer = 8;
+unsigned long buzzerMillis = 0;
+int s1Mel[] = {NOTE_C5, NOTE_G4};
+
+
 Servo coil;
 Servo motor;
 
@@ -19,17 +25,25 @@ CRGB leds[NUM_LEDS];
 
 void setup() { 
   Serial.begin(9600);
+  pinMode(buzzer, OUTPUT);
   pinMode(HALL_PIN, INPUT);
   FastLED.addLeds<WS2812B, DATA_PIN>(leds, NUM_LEDS);
   coil.attach(7);
   motor.attach(6);
   coil.write(90);
   motor.write(90);
+  tone(buzzer, NOTE_D4, 1000);
+  tone(buzzer, NOTE_D5, 1000);
+  noTone(buzzer);
 }
 byte hue = 0;
 int state = 0;
 unsigned long coilTimer = 0;
-void loop() { 
+void loop() {
+  if(millis() - buzzerMillis >= 500) {
+    buzzerMillis = millis();
+    buzz();
+  }
   if(state == 0)//off
   {
     leds[0] = CRGB(32,32,32);
@@ -80,4 +94,18 @@ void loop() {
   Serial.print(state);
   Serial.print("\t");
   Serial.println(analogRead(HALL_PIN));
+}
+
+void buzz() {
+  static int i = 0;
+  static int[] currentMel;
+  if(state == 1) {
+    currentMel = s1Mel[];
+  } else {
+    currentMel = [0];
+    noTone(buzzer);
+  }
+
+  tone(buzzer, currentMel[i]);
+  if(i+=1 > sizeof(currentMel)) i=0;
 }
