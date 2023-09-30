@@ -15,6 +15,7 @@
 int buzzer = 8;
 unsigned long buzzerMillis = 0;
 int s1Mel[] = {NOTE_C5, NOTE_G4};
+int s2Mel[] = {};
 
 
 Servo coil;
@@ -99,13 +100,20 @@ void loop() {
 void buzz() {
   static int i = 0;
   static int[] currentMel;
-  if(state == 1) {
+  if(state == 1 && currentMel != s1Mel[]) {
+    i = 0;
     currentMel = s1Mel[];
-  } else {
+  } else if(state == 2 && currentMel != s2Mel[]) {
+    i = 0;
+    currentMel = s2Mel[];
+  } else if(state == 0 || state == 3) {
+    i = 0; 
     currentMel = [0];
-    noTone(buzzer);
   }
 
   tone(buzzer, currentMel[i]);
-  if(i+=1 > sizeof(currentMel)) i=0;
+  i+=1;
+  if(i > sizeof(currentMel)) i=0;
+
+  //todo: stop hard in melody after 1 iteration, make hard in melody
 }
