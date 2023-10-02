@@ -22,7 +22,7 @@ int startMel[MEL_LENGTH] = {NOTE_C5, 1, NOTE_G4, 1, 0};
 int s1Mel[MEL_LENGTH] = {NOTE_C5, 1, NOTE_G4, 1, 0};
 int nullMel[MEL_LENGTH] = {0};
                               //s0,     s1,    s2,    s3
-int stateMel[][4]           = {startMel, s1Mel, nullMel, nullMel};
+int stateMel[][4]           = {*startMel, *s1Mel, *nullMel, *nullMel};
 boolean numberLoops[]       = {1,        9999,  0,       0};
 Servo coil;
 Servo motor;
@@ -45,7 +45,7 @@ byte hue = 0;
 int state = 0;
 unsigned long coilTimer = 0;
 void loop() {
-  if(millis() - buzzerMillis >= 500) {
+  if(millis() - buzzerMillis >= 1000) {
     buzzerMillis = millis();
     buzz();
   }
