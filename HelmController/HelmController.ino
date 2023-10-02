@@ -2,22 +2,28 @@
 #include <Servo.h>
 #include "pitches.h"
 
+#define DATA_PIN 16
+#define BUZZER_PIN 8
+
+
 // How many leds in your strip?
 #define NUM_LEDS 1
-#define DATA_PIN 16
 
 #define HALL_PIN 29
 #define HALL_MIN_THRESH 700
 
 
 #define COIL_TIME 20
+#define MEL_LENGTH 10
 
-int buzzer = 8;
 unsigned long buzzerMillis = 0;
-int s1Mel[] = {NOTE_C5, NOTE_G4};
-int s2Mel[] = {};
 
-
+int startMel[MEL_LENGTH] = {NOTE_C5, 1, NOTE_G4, 1, 0};
+int s1Mel[MEL_LENGTH] = {NOTE_C5, 1, NOTE_G4, 1, 0};
+int nullMel[MEL_LENGTH] = {0};
+                              //s0,     s1,    s2,    s3
+int stateMel[][4]           = {startMel, s1Mel, nullMel, nullMel};
+boolean numberLoops[]       = {1,        9999,  0,       0};
 Servo coil;
 Servo motor;
 
@@ -26,16 +32,14 @@ CRGB leds[NUM_LEDS];
 
 void setup() { 
   Serial.begin(9600);
-  pinMode(buzzer, OUTPUT);
+  pinMode(BUZZER_PIN, OUTPUT);
   pinMode(HALL_PIN, INPUT);
   FastLED.addLeds<WS2812B, DATA_PIN>(leds, NUM_LEDS);
   coil.attach(7);
   motor.attach(6);
   coil.write(90);
   motor.write(90);
-  tone(buzzer, NOTE_D4, 1000);
-  tone(buzzer, NOTE_D5, 1000);
-  noTone(buzzer);
+  noTone(BUZZER_PIN);
 }
 byte hue = 0;
 int state = 0;
@@ -97,23 +101,48 @@ void loop() {
   Serial.println(analogRead(HALL_PIN));
 }
 
+void copyMel(int *current, int *newMel, int len)
+{
+  for(int i = 0; i < len; i++)
+  {
+    current[i] = newMel[i];
+  }
+}
+
+int melNote = 0;
+int currentMel[MEL_LENGTH];
+int currentMelState = -1;
+int loops = 0;
 void buzz() {
-  static int i = 0;
-  static int[] currentMel;
-  if(state == 1 && currentMel != s1Mel[]) {
-    i = 0;
-    currentMel = s1Mel[];
-  } else if(state == 2 && currentMel != s2Mel[]) {
-    i = 0;
-    currentMel = s2Mel[];
-  } else if(state == 0 || state == 3) {
-    i = 0; 
-    currentMel = [0];
+  if(currentMelState != state)
+  {
+    currentMelState = state;
+    melNote = 0;
+    loops = 0;
+    copyMel(currentMel, stateMel[state], MEL_LENGTH);
+  }
+  int loopCount = numberLoops[currentMelState];
+  int hz = currentMel[melNote];
+  if(hz==1 || hz==0)
+  {
+    noTone(BUZZER_PIN);
+  }
+  else
+  {
+    tone(BUZZER_PIN, hz);
+  }
+  if(currentMel[melNote]>0)
+  {
+    melNote++;
+  }
+  else
+  {
+    if(loops<loopCount)
+    {
+      melNote = 0;
+      loops++;
+    }
   }
 
-  tone(buzzer, currentMel[i]);
-  i+=1;
-  if(i > sizeof(currentMel)) i=0;
-
-  //todo: stop hard in melody after 1 iteration, make hard in melody
+  //todo: make hard in melody
 }
